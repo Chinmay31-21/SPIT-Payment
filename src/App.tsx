@@ -1,361 +1,299 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ThemeToggle } from './components/ThemeToggle';
-import { SearchEngine } from './components/Search/SearchEngine';
-import { useSearch } from './hooks/useSearch';
-import { SEOLayout } from './components/Layout/SEOLayout';
-import { PaymentGateway } from './components/PaymentGateway';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast, { Toaster } from 'react-hot-toast';
+import { PaymentForm } from './components/PaymentForm';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { PaymentLinkModal } from './components/PaymentLinkModal';
+import { PaymentSuccess } from './components/PaymentSuccess';
+import { PaymentFailure } from './components/PaymentFailure';
+import { PaymentForm as PaymentFormType, PaymentRecord, EasebuzzResponse } from './types/payment';
+import { paymentService } from './services/paymentService';
+import { loadEasebuzzScript, openEasebuzzCheckout, openEasyCollectLink } from './utils/easebuzz';
+import { generateReceipt } from './utils/receiptGenerator';
 
-import {
-  Search,
-  Instagram,
-  Linkedin,
-  Twitter,
-  Youtube,
-  Facebook,
-} from 'lucide-react';
-import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
-import { MainContent } from './components/MainContent';
-import { PowerUpAnimation } from './components/PowerUpAnimation';
-import { About } from './pages/About';
-import AcademicsLayout from './pages/Academics';
-import { Students } from './pages/Students';
-import { Research } from './pages/Research';
-import { Library } from './pages/Library';
-import { Placements } from './pages/Placements';
-import { Admissions } from './pages/Admissions';
-import { Exams } from './pages/Exam';
-import ShresthaClub from './pages/ShresthaClub';
-import CareerAtSpit from './pages/CareerAtSpit';
-import AllAnnouncements from './pages/AllAnnouncements';
-import MicroSpecializationPrograms from './pages/MicroSpecializationPrograms';
-import { Contact } from './pages/Contact';
-import { NAAC } from './pages/accreditation/NAAC';
-import { NIRF } from './pages/accreditation/NIRF';
-import { IIC } from './pages/accreditation/IIC';
-import { ARIIA } from './pages/accreditation/ARIIA';
-import { NBA } from './pages/accreditation/NBA';
-import { IQAC } from './pages/accreditation/IQAC';
-import { AICTE } from './pages/accreditation/AICTE';
-import { MandatoryDisclosure } from './pages/resources/MandatoryDisclosure';
-import { Tender } from './pages/resources/Tender';
-import { AntiRagging } from './pages/resources/AntiRagging';
-import { RTI } from './pages/resources/RTI';
-import { Grievance } from './pages/resources/Grievance';
-import { FeesRegulatory } from './pages/resources/FeesRegulatory';
-import { AlumniNetworkDemo } from './pages/AlumniNetworkDemo';
-
-const PageTransition = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+type AppState = 'form' | 'confirmation' | 'processing' | 'payment_link' | 'success' | 'failure';
 
 function App() {
-  const [showPowerUp, setShowPowerUp] = useState(() => {
-    const hasVisited = sessionStorage.getItem('hasVisited');
-    return !hasVisited;
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
-
-  const { search, isLoading: searchLoading } = useSearch();
+  const [currentState, setCurrentState] = useState<AppState>('form');
+  const [paymentData, setPaymentData] = useState<PaymentFormType | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showPaymentLink, setShowPaymentLink] = useState(false);
+  const [paymentLink, setPaymentLink] = useState<string>('');
+  const [paymentRecord, setPaymentRecord] = useState<PaymentRecord | null>(null);
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'checkout' | 'easy_collect'>('easy_collect');
 
   useEffect(() => {
-    if (!showPowerUp) {
-      sessionStorage.setItem('hasVisited', 'true');
-      setTimeout(() => {
-        setIsAnimating(true);
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 2000);
-      }, 1500);
+    // Load existing payment record if any
+    const existingRecord = paymentService.getPaymentRecord();
+    if (existingRecord) {
+      setPaymentRecord(existingRecord);
+      setCurrentState('success');
     }
-  }, [showPowerUp]);
+  }, []);
 
-  const handleSearch = async (query: string, filters: any) => {
-    const results = await search(query, filters);
-    setSearchResults(results);
+  const handleFormSubmit = async (formData: PaymentFormType) => {
+    setPaymentData(formData);
+    setShowConfirmation(true);
   };
 
-  const [showPopup, setShowPopup] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [isCarouselHovered, setIsCarouselHovered] = useState(false);
+  const handleConfirmPayment = async () => {
+    if (!paymentData) return;
 
-  const carouselSlides = [
-    {
-      src: "/assets/alumni.jpg",
-      headline: "SPIT Allied Division Payment Gateway",
-      description: "Secure and easy fee payment for certificate courses. Pay online with multiple payment options through Easebuzz."
-    },
-    {
-      src: "/assets/phonepe.jpg",
-      headline: "Multiple Payment Options",
-      description: "Pay using Credit Card, Debit Card, UPI, Net Banking, and Digital Wallets. All transactions are secure and encrypted."
-    },
-    {
-      src: "/assets/jpmc.jpg",
-      headline: "Instant Receipt Generation",
-      description: "Get instant payment confirmation and download your receipt immediately after successful payment."
+    setLoading(true);
+    setShowConfirmation(false);
+
+    try {
+      // Store payment data for later use
+      localStorage.setItem('currentPayment', JSON.stringify(paymentData));
+
+      if (paymentMethod === 'easy_collect') {
+        // Method 1: Create Easy Collect Payment Link
+        setCurrentState('processing');
+        const order = await paymentService.createEasyCollectLink(paymentData);
+        
+        if (order.paymentLink) {
+          setPaymentLink(order.paymentLink);
+          setShowPaymentLink(true);
+          setCurrentState('payment_link');
+          
+          // Auto-open the payment link
+          setTimeout(() => {
+            openEasyCollectLink(order.paymentLink!);
+          }, 1000);
+        }
+      } else {
+        // Method 2: Traditional Checkout Modal
+        setCurrentState('processing');
+        
+        // Load Easebuzz script
+        const isEasebuzzLoaded = await loadEasebuzzScript();
+        if (!isEasebuzzLoaded) {
+          throw new Error('Failed to load Easebuzz SDK');
+        }
+
+        // Create order
+        const order = await paymentService.createOrder(paymentData);
+        
+        // Open Easebuzz checkout
+        if (order.easebuzzKey && order.accessKey) {
+          openEasebuzzCheckout(
+            order.orderId,
+            order.amount,
+            paymentData,
+            order.accessKey,
+            handlePaymentSuccess,
+            handlePaymentFailure
+          );
+        }
+      }
+    } catch (err: any) {
+      handlePaymentFailure(err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  useEffect(() => {
-    if (!isLoading) {
-      const timer = setTimeout(() => setShowPopup(true), 300);
-      return () => clearTimeout(timer);
+  const handlePaymentSuccess = async (response: EasebuzzResponse) => {
+    setLoading(true);
+    
+    try {
+      // Verify payment
+      const verification = {
+        easepayid: response.easepayid,
+        txnid: response.txnid,
+        amount: response.amount,
+        status: response.status,
+        hash: response.hash
+      };
+      
+      const record = await paymentService.verifyPayment(verification);
+      setPaymentRecord(record);
+      setCurrentState('success');
+      toast.success('Payment successful!');
+    } catch (err: any) {
+      handlePaymentFailure(err);
+    } finally {
+      setLoading(false);
     }
-  }, [isLoading]);
+  };
 
-  useEffect(() => {
-    if (!showPopup || isCarouselHovered) return;
-    const interval = setInterval(() => {
-      setCarouselIndex(idx => (idx + 1) % carouselSlides.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [showPopup, isCarouselHovered, carouselSlides.length]);
+  const handlePaymentFailure = (error: any) => {
+    setError(error.message || 'Payment failed. Please try again.');
+    setCurrentState('failure');
+    toast.error('Payment failed!');
+    setLoading(false);
+  };
 
-  if (showPowerUp) {
-    return <PowerUpAnimation onComplete={() => setShowPowerUp(false)} />;
-  }
+  const handleDownloadReceipt = () => {
+    if (paymentRecord) {
+      generateReceipt(paymentRecord);
+      toast.success('Receipt downloaded successfully!');
+    }
+  };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-[#0A0A0A] flex items-center justify-center">
-        <div className={`relative w-40 h-40 ${isAnimating ? 'animate-coin-flip' : ''}`}>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFD700] to-[#DAA520] shadow-lg transform-gpu backface-hidden">
-            <div className="w-full h-full flex items-center justify-center">
-              <img
-                src="/assets/SPIT_Logo.png"
-                alt="SPIT Logo"
-                className="w-45 h-45 object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleNewPayment = () => {
+    paymentService.clearPaymentData();
+    setPaymentData(null);
+    setPaymentRecord(null);
+    setPaymentLink('');
+    setShowPaymentLink(false);
+    setCurrentState('form');
+    setError('');
+  };
+
+  const handleRetryPayment = () => {
+    if (paymentData) {
+      setCurrentState('confirmation');
+      setShowConfirmation(true);
+      setError('');
+    } else {
+      setCurrentState('form');
+    }
+  };
+
+  const handleBackToForm = () => {
+    setCurrentState('form');
+    setShowPaymentLink(false);
+    setError('');
+  };
 
   return (
-    <SEOLayout>
-      <Router>
-        <>
-          {showPopup && (
-            <div className="popup-overlay flex items-center justify-center z-[9999]">
-              <div
-                className="popup-container relative flex flex-col items-center bg-gradient-to-br from-[#f8f9fa] via-[#e9ecef] to-[#dee2e6] dark:from-[#18181b] dark:via-[#192351] dark:to-[#27193f] rounded-xl shadow-2xl p-0 w-full max-w-lg"
-                style={{ minHeight: 380 }}
-              >
-                <button
-                  className="popup-close absolute top-4 left-4 bg-[#1e40af] hover:bg-[#FFD700] text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow transition-colors"
-                  onClick={() => setShowPopup(false)}
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
-                <h2 className="w-full text-center text-xl md:text-2xl font-bold text-[#1e40af] dark:text-[#FFD700] mt-8 mb-2 px-4">
-                  {carouselSlides[carouselIndex].headline}
-                </h2>
-                <div
-                  className="w-full flex-1 flex items-center justify-center px-8 pt-2 pb-2"
-                  onMouseEnter={() => setIsCarouselHovered(true)}
-                  onMouseLeave={() => setIsCarouselHovered(false)}
-                >
-                  <img
-                    src={carouselSlides[carouselIndex].src}
-                    alt={carouselSlides[carouselIndex].headline}
-                    className="w-full max-h-[55vh] object-contain rounded-lg shadow-lg transition duration-500"
-                  />
-                </div>
-                <p className="w-full text-center text-base text-[#222] dark:text-[#e9ecef] mb-2 px-6">
-                  {carouselSlides[carouselIndex].description}
-                </p>
-                <div className="flex justify-between items-center w-full px-8 pb-6">
-                  <button
-                    className="popup-carousel-arrow left bg-[#e9ecef] dark:bg-[#1e40af]/20 hover:bg-[#1e40af] dark:hover:bg-[#FFD700] text-[#1e40af] dark:text-[#FFD700] rounded-full w-9 h-9 flex items-center justify-center text-xl font-bold shadow transition-colors"
-                    onClick={() =>
-                      setCarouselIndex((carouselIndex - 1 + carouselSlides.length) % carouselSlides.length)
-                    }
-                    aria-label="Previous"
-                  >
-                    &#8592;
-                  </button>
-                  <div className="popup-carousel-indicators flex gap-2">
-                    {carouselSlides.map((_, idx) => (
-                      <span
-                        key={idx}
-                        className={`dot w-3 h-3 rounded-full cursor-pointer transition-colors ${
-                          carouselIndex === idx
-                            ? "bg-[#1e40af] dark:bg-[#FFD700] shadow"
-                            : "bg-[#e9ecef] dark:bg-[#192351]"
-                        }`}
-                        onClick={() => setCarouselIndex(idx)}
-                        aria-label={`Go to slide ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    className="popup-carousel-arrow right bg-[#e9ecef] dark:bg-[#1e40af]/20 hover:bg-[#1e40af] dark:hover:bg-[#FFD700] text-[#1e40af] dark:text-[#FFD700] rounded-full w-9 h-9 flex items-center justify-center text-xl font-bold shadow transition-colors"
-                    onClick={() =>
-                      setCarouselIndex((carouselIndex + 1) % carouselSlides.length)
-                    }
-                    aria-label="Next"
-                  >
-                    &#8594;
-                  </button>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+      <AnimatePresence mode="wait">
+        {currentState === 'form' && (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PaymentForm 
+              onSubmit={handleFormSubmit} 
+              loading={loading}
+              paymentMethod={paymentMethod}
+              onPaymentMethodChange={setPaymentMethod}
+            />
+          </motion.div>
+        )}
+
+        {currentState === 'payment_link' && (
+          <motion.div
+            key="payment_link"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 text-center"
+          >
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">SPIT</span>
               </div>
             </div>
-          )}
-        </>
-        <div className="min-h-screen bg-white dark:bg-[#0A0A0A] flex flex-col">
-          <header className="relative border-t-2 border-[#4169E1] bg-black/30 backdrop-blur-md">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex flex-col md:flex-row items-start gap-8">
-                <div className="flex items-start gap-4 w-full md:w-auto">
-                  <a href="/" className="flex items-center gap-4">
-                    <img
-                      src="/assets/SPIT_Logo.png"
-                      alt="SPIT Logo"
-                      className="w-20 h-20 object-contain animate-float"
-                    />
-                    <div>
-                      <p className="text-[#FFFFFF]/80 dark:text-white/80 text-sm">Bhartiya Vidya Bhavan's</p>
-                      <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-[#FFFFFF] to-[#FFFFFF] dark:from-[#FFFFFF] dark:to-[#FFFFFF] bg-clip-text text-transparent animate-glow">
-                        Sardar Patel Institute of Technology
-                      </h1>
-                      <p className="text-[#FFFFFF] dark:text-white text-xs mt-1">
-                        Autonomous Institute Affiliated to Mumbai University
-                      </p>
-                    </div>
-                  </a>
-                </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Payment Link Generated</h2>
+            <p className="text-gray-600 mb-4">Your secure payment link is ready</p>
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <p className="text-sm text-blue-800">
+                The payment window should open automatically. If not, click the link in the modal.
+              </p>
+            </div>
+            <button
+              onClick={handleNewPayment}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Generate New Link
+            </button>
+          </motion.div>
+        )}
 
-                <div className="flex-1 w-full md:w-auto">
-                  <div className="relative w-full max-w-2xl mx-auto">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 border border-[#4169E1]/30 text-[#0A0A0A] dark:text-white placeholder-[#0A0A0A]/50 dark:placeholder-white/50 focus:outline-none focus:border-[#4169E1] transition-all backdrop-blur-lg"
-                      onFocus={() => setShowSearch(true)}
-                      readOnly
-                    />
-                    <button 
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#4169E1] hover:text-[#FFD700] transition-colors"
-                      onClick={() => setShowSearch(true)}
-                    >
-                      <Search size={20} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 mt-4 md:mt-0 w-full md:w-auto justify-center md:justify-end">
-                  <ThemeToggle />
-                  <a href="#" aria-label="Instagram" className="text-white/80 hover:text-[#4169E1] transition-colors">
-                    <Instagram size={20} />
-                  </a>
-                  <a href="https://www.linkedin.com/school/bhartiya-vidya-bhavans-sardar-patel-institute-of-technology-munshi-nagar-andheri-mumbai/" aria-label="LinkedIn" className="text-white/80 hover:text-[#4169E1] transition-colors">
-                    <Linkedin size={20} />
-                  </a>
-                  <a href="https://x.com/bvbspit" aria-label="Twitter" className="text-white/80 hover:text-[#4169E1] transition-colors">
-                    <Twitter size={20} />
-                  </a>
-                  <a href="https://www.youtube.com/@SPITMedia-tu5rk" aria-label="Youtube" className="text-white/80 hover:text-[#4169E1] transition-colors">
-                    <Youtube size={20} />
-                  </a>
-                  <a href="https://www.facebook.com/SPITCOLLEGE/" aria-label="Facebook" className="text-white/80 hover:text-[#4169E1] transition-colors">
-                    <Facebook size={20} />
-                  </a>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center justify-center md:justify-end gap-4 text-sm">
-                <a href="/accreditation/NAAC" className="text-white hover:text-[#FFD700] transition-colors">NAAC</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/accreditation/NIRF" className="text-white hover:text-[#FFD700] transition-colors">NIRF</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/accreditation/IIC" className="text-white hover:text-[#FFD700] transition-colors">IIC</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/accreditation/ARIIA" className="text-white hover:text-[#FFD700] transition-colors">ARIIA</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/accreditation/NBA" className="text-white hover:text-[#FFD700] transition-colors">NBA</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/accreditation/IQAC" className="text-white hover:text-[#FFD700] transition-colors">IQAC</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/accreditation/AICTE" className="text-white hover:text-[#FFD700] transition-colors">AICTE</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/alumni-network" className="text-white hover:text-[#FFD700] transition-colors">Alumni Network</a>
-                <span className="text-[#663399]">|</span>
-                <a href="/payment" className="text-white hover:text-[#FFD700] transition-colors font-semibold">Fee Payment</a>
+        {currentState === 'processing' && (
+          <motion.div
+            key="processing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 text-center"
+          >
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">SPIT</span>
               </div>
             </div>
-          </header>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Processing Payment</h2>
+            <p className="text-gray-600">Please wait while we process your payment...</p>
+            <div className="mt-4 flex items-center justify-center space-x-2">
+              <div className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold">
+                Easebuzz
+              </div>
+              <span className="text-sm text-gray-600">Secure Payment Gateway</span>
+            </div>
+          </motion.div>
+        )}
 
-          <Navbar />
+        {currentState === 'success' && paymentRecord && (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PaymentSuccess
+              paymentRecord={paymentRecord}
+              onDownloadReceipt={handleDownloadReceipt}
+              onNewPayment={handleNewPayment}
+            />
+          </motion.div>
+        )}
 
-          <PageTransition>
-            <Routes>
-              <Route path="/" element={<MainContent />} />
-              <Route path="/payment" element={<PaymentGateway />} />
-              <Route path="/about/*" element={<About />} />
-              <Route path="/academics/*" element={<AcademicsLayout />} />
-              <Route path="/students/*" element={<Students />} />
-              <Route path="/research/*" element={<Research />} />
-              <Route path="/library/*" element={<Library />} />
-              <Route path="/placements/*" element={<Placements />} />
-              <Route path="/admissions/*" element={<Admissions />} />
-              <Route path="/contact/*" element={<Contact />} />
-              <Route path="/exam/*" element={<Exams />} />
-              <Route path="/shresthaclub/*" element={<ShresthaClub />} />
-              <Route path="/careeratspit/*" element={<CareerAtSpit />} />
-              <Route path="/microspecializationprograms/*" element={<MicroSpecializationPrograms/>}/>
-              <Route path="/allannouncements/*" element={<AllAnnouncements/>}/>
-              <Route path="/accreditation/NAAC" element={<NAAC />} />
-              <Route path="/accreditation/NIRF" element={<NIRF />} />
-              <Route path="/accreditation/IIC" element={<IIC />} />
-              <Route path="/accreditation/ARIIA" element={<ARIIA />} />
-              <Route path="/accreditation/NBA" element={<NBA />} />
-              <Route path="/accreditation/IQAC" element={<IQAC />} />
-              <Route path="/accreditation/AICTE" element={<AICTE />} />
-              <Route path="/resources/mandatory-disclosure" element={<MandatoryDisclosure />} />
-              <Route path="/resources/FeesRegulatory" element={<FeesRegulatory />} />
-              <Route path="/resources/tender" element={<Tender />} />
-              <Route path="/resources/antiragging" element={<AntiRagging />} />
-              <Route path="/resources/rti" element={<RTI />} />
-              <Route path="/resources/grievance" element={<Grievance />} />
-              <Route path="/alumni-network" element={<AlumniNetworkDemo />} />
-            </Routes>
-          </PageTransition>
+        {currentState === 'failure' && (
+          <motion.div
+            key="failure"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PaymentFailure
+              error={error}
+              onRetry={handleRetryPayment}
+              onBack={handleBackToForm}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <Footer />
+      <ConfirmationModal
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        onConfirm={handleConfirmPayment}
+        paymentData={paymentData || {} as PaymentFormType}
+        loading={loading}
+        paymentMethod={paymentMethod}
+      />
 
-          <SearchEngine
-            isOpen={showSearch}
-            onClose={() => setShowSearch(false)}
-            onSearch={handleSearch}
-            results={searchResults}
-            isLoading={searchLoading}
-          />
-        </div>
-      </Router>
-    </SEOLayout>
+      <PaymentLinkModal
+        isOpen={showPaymentLink}
+        onClose={() => setShowPaymentLink(false)}
+        paymentLink={paymentLink}
+        amount={paymentData?.amount || 0}
+        studentName={paymentData?.fullName || ''}
+      />
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
+    </div>
   );
 }
 
