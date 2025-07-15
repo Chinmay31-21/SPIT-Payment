@@ -5,8 +5,8 @@ import { PaymentForm as PaymentFormType } from '../types/payment';
 interface PaymentFormProps {
   onSubmit: (data: PaymentFormType) => void;
   loading: boolean;
-  paymentMethod?: 'checkout' | 'easy_collect';
-  onPaymentMethodChange?: (method: 'checkout' | 'easy_collect') => void;
+  paymentMethod: 'checkout' | 'easy_collect';
+  onPaymentMethodChange: (method: 'checkout' | 'easy_collect') => void;
 }
 
 const courses = [
@@ -23,8 +23,8 @@ const courses = [
 export const PaymentForm: React.FC<PaymentFormProps> = ({ 
   onSubmit, 
   loading, 
-  paymentMethod = 'easy_collect',
-  onPaymentMethodChange 
+  paymentMethod,
+  onPaymentMethodChange
 }) => {
   const [formData, setFormData] = useState<PaymentFormType>({
     fullName: '',
@@ -109,35 +109,33 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </div>
       </div>
 
-      {onPaymentMethodChange && (
-        <div className="mb-6">
-          <label className="form-label">
-            Payment Method
+      <div className="mb-6">
+        <label className="form-label">
+          Payment Method
+        </label>
+        <div className="flex space-x-4">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              value="easy_collect"
+              checked={paymentMethod === 'easy_collect'}
+              onChange={(e) => onPaymentMethodChange(e.target.value as 'easy_collect')}
+              className="mr-2 accent-blue-600"
+            />
+            <span className="text-sm text-secondary">Easy Collect Link</span>
           </label>
-          <div className="flex space-x-4">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                value="easy_collect"
-                checked={paymentMethod === 'easy_collect'}
-                onChange={(e) => onPaymentMethodChange(e.target.value as 'easy_collect')}
-                className="mr-2 accent-blue-600"
-              />
-              <span className="text-sm text-secondary">Easy Collect Link</span>
-            </label>
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                value="checkout"
-                checked={paymentMethod === 'checkout'}
-                onChange={(e) => onPaymentMethodChange(e.target.value as 'checkout')}
-                className="mr-2 accent-blue-600"
-              />
-              <span className="text-sm text-secondary">Checkout Modal</span>
-            </label>
-          </div>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              value="checkout"
+              checked={paymentMethod === 'checkout'}
+              onChange={(e) => onPaymentMethodChange(e.target.value as 'checkout')}
+              className="mr-2 accent-blue-600"
+            />
+            <span className="text-sm text-secondary">Checkout Modal</span>
+          </label>
         </div>
-      )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

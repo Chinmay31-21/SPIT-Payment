@@ -9,7 +9,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   paymentData: PaymentForm;
   loading: boolean;
-  paymentMethod?: 'checkout' | 'easy_collect';
+  paymentMethod: 'checkout' | 'easy_collect';
 }
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -18,7 +18,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   paymentData,
   loading,
-  paymentMethod = 'easy_collect'
+  paymentMethod
 }) => {
   if (!isOpen) return null;
 
