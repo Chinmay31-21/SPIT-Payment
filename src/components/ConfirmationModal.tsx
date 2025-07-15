@@ -23,26 +23,26 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="modal-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+        className="modal-content max-w-md w-full p-6"
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-red-600 font-bold text-sm">SPIT</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse-glow">
+              <span className="text-white font-bold text-sm">SPIT</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Confirm Payment</h2>
-              <p className="text-sm text-gray-500">Please confirm your information</p>
+              <h2 className="text-xl font-bold text-primary">Confirm Payment</h2>
+              <p className="text-sm text-tertiary">Please confirm your information</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-tertiary hover:text-primary transition-colors p-1 rounded-lg hover:bg-glass"
           >
             <X size={24} />
           </button>
@@ -50,45 +50,45 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
         <div className="space-y-4 mb-6">
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-600">Name:</span>
-            <span className="font-semibold text-gray-800">{paymentData.fullName}</span>
+            <span className="text-secondary">Name:</span>
+            <span className="font-semibold text-primary">{paymentData.fullName}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-600">Email:</span>
-            <span className="font-semibold text-gray-800">{paymentData.email}</span>
+            <span className="text-secondary">Email:</span>
+            <span className="font-semibold text-primary">{paymentData.email}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-600">Phone:</span>
-            <span className="font-semibold text-gray-800">{paymentData.phone}</span>
+            <span className="text-secondary">Phone:</span>
+            <span className="font-semibold text-primary">{paymentData.phone}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-600">Course:</span>
-            <span className="font-semibold text-gray-800">{paymentData.courseName}</span>
+            <span className="text-secondary">Course:</span>
+            <span className="font-semibold text-primary">{paymentData.courseName}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-600">College:</span>
-            <span className="font-semibold text-gray-800">{paymentData.collegeName}</span>
+            <span className="text-secondary">College:</span>
+            <span className="font-semibold text-primary">{paymentData.collegeName}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-600">Total Amount:</span>
-            <span className="font-bold text-xl text-green-600">₹ {paymentData.amount}.0</span>
+            <span className="text-secondary">Total Amount:</span>
+            <span className="font-bold text-xl success-indicator">₹ {paymentData.amount}.0</span>
           </div>
         </div>
 
-        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+        <div className="bg-glass p-4 rounded-lg mb-6 border border-primary/20">
           <div className="flex items-center justify-center space-x-2 mb-2">
-            <div className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-md animate-shimmer">
               Easebuzz
             </div>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-secondary">
               {paymentMethod === 'easy_collect' ? 'Easy Collect Payment' : 'Secure Payment Gateway'}
             </span>
           </div>
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-tertiary text-center">
             For any queries, please contact us at support@easebuzz.in
           </p>
           {paymentMethod === 'easy_collect' && (
-            <p className="text-xs text-gray-500 text-center mt-1">
+            <p className="text-xs text-tertiary text-center mt-1">
               A payment link will be generated for secure payment
             </p>
           )}
@@ -98,7 +98,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 border border-primary/30 rounded-lg text-secondary hover:bg-glass transition-all disabled:opacity-50"
           >
             Cancel
           </button>
@@ -107,7 +107,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex-1 btn-primary disabled:opacity-50"
           >
             {loading ? 'Processing...' : paymentMethod === 'easy_collect' ? 'Generate Link' : 'Pay'}
           </motion.button>

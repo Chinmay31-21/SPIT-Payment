@@ -44,55 +44,55 @@ export const PaymentLinkModal: React.FC<PaymentLinkModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="modal-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+        className="modal-content max-w-md w-full p-6"
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-red-600 font-bold text-sm">SPIT</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse-glow">
+              <span className="text-white font-bold text-sm">SPIT</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Payment Link Generated</h2>
-              <p className="text-sm text-gray-500">Ready for secure payment</p>
+              <h2 className="text-xl font-bold text-primary">Payment Link Generated</h2>
+              <p className="text-sm text-tertiary">Ready for secure payment</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-tertiary hover:text-primary transition-colors p-1 rounded-lg hover:bg-glass"
           >
             <X size={24} />
           </button>
         </div>
 
         <div className="space-y-4 mb-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-glass border border-success/30 rounded-lg p-4">
             <div className="flex items-center space-x-2 mb-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="font-semibold text-green-800">Payment Link Created</span>
+              <CheckCircle className="w-5 h-5 success-indicator" />
+              <span className="font-semibold success-indicator">Payment Link Created</span>
             </div>
-            <p className="text-sm text-green-700">
+            <p className="text-sm text-secondary">
               Your secure payment link has been generated successfully.
             </p>
           </div>
 
           <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Student:</span>
-              <span className="font-semibold text-gray-800">{studentName}</span>
+            <div className="flex justify-between items-center py-2 border-b border-primary/10">
+              <span className="text-secondary">Student:</span>
+              <span className="font-semibold text-primary">{studentName}</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Amount:</span>
-              <span className="font-bold text-xl text-green-600">₹ {amount}</span>
+            <div className="flex justify-between items-center py-2 border-b border-primary/10">
+              <span className="text-secondary">Amount:</span>
+              <span className="font-bold text-xl success-indicator">₹ {amount}</span>
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="bg-glass rounded-lg p-4 border border-primary/20">
+            <label className="form-label">
               Payment Link:
             </label>
             <div className="flex items-center space-x-2">
@@ -100,11 +100,11 @@ export const PaymentLinkModal: React.FC<PaymentLinkModalProps> = ({
                 type="text"
                 value={paymentLink}
                 readOnly
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                className="flex-1 form-input text-sm"
               />
               <button
                 onClick={handleCopyLink}
-                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="px-3 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all shadow-md"
                 title="Copy link"
               >
                 {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
@@ -113,14 +113,14 @@ export const PaymentLinkModal: React.FC<PaymentLinkModalProps> = ({
           </div>
         </div>
 
-        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+        <div className="bg-glass p-4 rounded-lg mb-6 border border-primary/20">
           <div className="flex items-center justify-center space-x-2 mb-2">
-            <div className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-md animate-shimmer">
               Easebuzz
             </div>
-            <span className="text-sm text-gray-600">Easy Collect Payment</span>
+            <span className="text-sm text-secondary">Easy Collect Payment</span>
           </div>
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-tertiary text-center">
             Secure payment processing with multiple payment options
           </p>
         </div>
@@ -128,7 +128,7 @@ export const PaymentLinkModal: React.FC<PaymentLinkModalProps> = ({
         <div className="flex space-x-4">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-3 border border-primary/30 rounded-lg text-secondary hover:bg-glass transition-all"
           >
             Close
           </button>
@@ -136,14 +136,14 @@ export const PaymentLinkModal: React.FC<PaymentLinkModalProps> = ({
             onClick={handleOpenLink}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex-1 flex items-center justify-center space-x-2 btn-primary"
           >
             <ExternalLink size={16} />
             <span>Open Payment</span>
           </motion.button>
         </div>
 
-        <div className="mt-4 text-center text-xs text-gray-500">
+        <div className="mt-4 text-center text-xs text-tertiary">
           <p>The payment link is valid for 24 hours</p>
           <p>You can share this link via SMS, email, or WhatsApp</p>
         </div>

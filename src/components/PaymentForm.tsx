@@ -91,19 +91,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8"
+      className="max-w-2xl mx-auto card p-8 animate-slide-in-glow"
     >
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-sm">SPIT</span>
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse-glow">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-700 rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-sm animate-neon-pulse">SPIT</span>
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">SPIT ALLIED DIVISION</h1>
-        <p className="text-gray-600">Fee collection for certificate courses</p>
+        <h1 className="text-3xl font-bold text-gradient mb-2">SPIT ALLIED DIVISION</h1>
+        <p className="text-secondary">Fee collection for certificate courses</p>
         <div className="flex items-center justify-center mt-4 space-x-2">
-          <span className="text-sm text-gray-500">Powered by</span>
-          <div className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold">
+          <span className="text-sm text-tertiary">Powered by</span>
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-md animate-shimmer">
             Easebuzz
           </div>
         </div>
@@ -111,29 +111,29 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
       {onPaymentMethodChange && (
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="form-label">
             Payment Method
           </label>
           <div className="flex space-x-4">
-            <label className="flex items-center">
+            <label className="flex items-center cursor-pointer">
               <input
                 type="radio"
                 value="easy_collect"
                 checked={paymentMethod === 'easy_collect'}
                 onChange={(e) => onPaymentMethodChange(e.target.value as 'easy_collect')}
-                className="mr-2"
+                className="mr-2 accent-blue-600"
               />
-              <span className="text-sm">Easy Collect Link</span>
+              <span className="text-sm text-secondary">Easy Collect Link</span>
             </label>
-            <label className="flex items-center">
+            <label className="flex items-center cursor-pointer">
               <input
                 type="radio"
                 value="checkout"
                 checked={paymentMethod === 'checkout'}
                 onChange={(e) => onPaymentMethodChange(e.target.value as 'checkout')}
-                className="mr-2"
+                className="mr-2 accent-blue-600"
               />
-              <span className="text-sm">Checkout Modal</span>
+              <span className="text-sm text-secondary">Checkout Modal</span>
             </label>
           </div>
         </div>
@@ -141,92 +141,92 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="form-group">
+            <label className="form-label">
               Full Name *
             </label>
             <input
               type="text"
               value={formData.fullName}
               onChange={(e) => handleChange('fullName', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.fullName ? 'border-red-500' : 'border-gray-300'
+              className={`form-input ${
+                errors.fullName ? 'error' : ''
               }`}
               placeholder="Enter your full name"
             />
             {errors.fullName && (
-              <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+              <p className="error-message">{errors.fullName}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="form-group">
+            <label className="form-label">
               Email *
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
+              className={`form-input ${
+                errors.email ? 'error' : ''
               }`}
               placeholder="Enter your email"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              <p className="error-message">{errors.email}</p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="form-group">
+            <label className="form-label">
               Phone Number *
             </label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.phone ? 'border-red-500' : 'border-gray-300'
+              className={`form-input ${
+                errors.phone ? 'error' : ''
               }`}
               placeholder="Enter 10-digit phone number"
               maxLength={10}
             />
             {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              <p className="error-message">{errors.phone}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="form-group">
+            <label className="form-label">
               Amount (₹) *
             </label>
             <input
               type="number"
               value={formData.amount || ''}
               onChange={(e) => handleChange('amount', Number(e.target.value))}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.amount ? 'border-red-500' : 'border-gray-300'
+              className={`form-input ${
+                errors.amount ? 'error' : ''
               }`}
               placeholder="Enter amount"
               min="1"
             />
             {errors.amount && (
-              <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
+              <p className="error-message">{errors.amount}</p>
             )}
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="form-group">
+          <label className="form-label">
             Course Name *
           </label>
           <select
             value={formData.courseName}
             onChange={(e) => handleChange('courseName', e.target.value)}
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.courseName ? 'border-red-500' : 'border-gray-300'
+            className={`form-input ${
+              errors.courseName ? 'error' : ''
             }`}
           >
             <option value="">Select a course</option>
@@ -235,25 +235,25 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             ))}
           </select>
           {errors.courseName && (
-            <p className="text-red-500 text-sm mt-1">{errors.courseName}</p>
+            <p className="error-message">{errors.courseName}</p>
           )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="form-group">
+          <label className="form-label">
             College Name *
           </label>
           <input
             type="text"
             value={formData.collegeName}
             onChange={(e) => handleChange('collegeName', e.target.value)}
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.collegeName ? 'border-red-500' : 'border-gray-300'
+            className={`form-input ${
+              errors.collegeName ? 'error' : ''
             }`}
             placeholder="Enter your college name"
           />
           {errors.collegeName && (
-            <p className="text-red-500 text-sm mt-1">{errors.collegeName}</p>
+            <p className="error-message">{errors.collegeName}</p>
           )}
         </div>
 
@@ -262,15 +262,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           disabled={loading}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Processing...' : paymentMethod === 'easy_collect' ? 'Generate Payment Link' : 'Proceed to Pay'}
         </motion.button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-gray-500">
+      <div className="mt-6 text-center text-sm text-tertiary">
         <p>Details of courses are as below:</p>
-        <p className="mt-2">You agree to share information entered on this page with SPIT ALLIED DIVISION (owner of this page) and Easebuzz, adhering to applicable laws.</p>
+        <p className="mt-2 opacity-80">You agree to share information entered on this page with SPIT ALLIED DIVISION (owner of this page) and Easebuzz, adhering to applicable laws.</p>
       </div>
     </motion.div>
   );
