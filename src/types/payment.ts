@@ -93,3 +93,4 @@ declare global {
     EasebuzzCheckout: any;
   }
 }
+

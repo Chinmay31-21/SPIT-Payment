@@ -13,7 +13,7 @@ import { generateReceipt } from './utils/receiptGenerator';
 
 type AppState = 'form' | 'confirmation' | 'processing' | 'payment_link' | 'success' | 'failure';
 
-// --- THEME LOGIC START ---
+// --- THEME LOGIC (No changes here) ---
 const ThemeToggle: React.FC<{ theme: string; toggleTheme: () => void }> = ({
   theme,
   toggleTheme,
@@ -40,10 +40,8 @@ const ThemeToggle: React.FC<{ theme: string; toggleTheme: () => void }> = ({
     {theme === "light" ? "🌞" : "🌜"}
   </button>
 );
-// --- THEME LOGIC END ---
 
 function App() {
-  // --- THEME STATE ---
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark") return saved;
@@ -57,18 +55,13 @@ function App() {
     root.classList.add(theme);
     root.classList.add("theme-transition");
     localStorage.setItem("theme", theme);
-
-    const timeout = setTimeout(() => {
-      root.classList.remove("theme-transition");
-    }, 300);
-
+    const timeout = setTimeout(() => root.classList.remove("theme-transition"), 300);
     return () => clearTimeout(timeout);
   }, [theme]);
 
   const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  // --- END THEME STATE ---
 
-  // --- Payment state and logic ---
+  // --- Payment state and logic (with updates) ---
   const [currentState, setCurrentState] = useState<AppState>('form');
   const [paymentData, setPaymentData] = useState<PaymentFormType | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -80,19 +73,34 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState<'checkout' | 'easy_collect'>('easy_collect');
 
   useEffect(() => {
-    // Load existing payment record if any
-    const existingRecord = paymentService.getPaymentRecord();
-    if (existingRecord) {
-      setPaymentRecord(existingRecord);
-      setCurrentState('success');
+    // Check for payment status from URL on component mount (for redirects)
+    const urlParams = new URLSearchParams(window.location.search);
+    const txnid = urlParams.get('txnid');
+    const status = urlParams.get('status');
+
+    if (txnid && status) {
+        if(status === 'success') {
+            const fetchRecord = async () => {
+                const record = await paymentService.getPaymentRecord(txnid);
+                if (record) {
+                    setPaymentRecord(record);
+                    setCurrentState('success');
+                }
+            };
+            fetchRecord();
+        } else {
+            setError("Payment was not successful.");
+            setCurrentState('failure');
+        }
     }
   }, []);
 
-  const handleFormSubmit = async (formData: PaymentFormType) => {
+  const handleFormSubmit = (formData: PaymentFormType) => {
     setPaymentData(formData);
     setShowConfirmation(true);
   };
 
+  // **UPDATED FUNCTION**
   const handleConfirmPayment = async () => {
     if (!paymentData) return;
 
@@ -101,73 +109,65 @@ function App() {
     setCurrentState('processing');
 
     try {
-      // Store payment data for later use
       localStorage.setItem('currentPayment', JSON.stringify(paymentData));
 
       if (paymentMethod === 'easy_collect') {
-        // Generate Easy Collect payment link
         const order = await paymentService.createEasyCollectLink(paymentData);
         setPaymentLink(order.paymentLink || '');
         setShowPaymentLink(true);
         setCurrentState('payment_link');
-        
-        toast.success('Payment link generated successfully!');
-        
-        // Auto-open the payment link
+        toast.success('Payment link generated!');
         if (order.paymentLink) {
           openEasyCollectLink(order.paymentLink);
         }
       } else {
-        // Traditional checkout flow
+        // Traditional checkout flow now calls YOUR backend first
         const scriptLoaded = await loadEasebuzzScript();
-        if (!scriptLoaded) {
-          throw new Error('Failed to load payment gateway');
-        }
+        if (!scriptLoaded) throw new Error('Failed to load payment gateway');
 
+        // 1. Get order details and hash from YOUR backend
         const order = await paymentService.createOrder(paymentData);
-        
+
+        // 2. Open checkout with the details from your backend
         openEasebuzzCheckout(
-          order.orderId,
-          order.amount,
+          order,
           paymentData,
-          order.accessKey || '',
           handlePaymentSuccess,
           handlePaymentFailure
         );
       }
     } catch (err) {
       console.error('Payment error:', err);
-      setError(err instanceof Error ? err.message : 'Payment failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(errorMessage);
       setCurrentState('failure');
-      toast.error('Payment failed. Please try again.');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+
   const handlePaymentSuccess = async (response: EasebuzzResponse) => {
     try {
-      const verification = {
-        easepayid: response.easepayid,
-        txnid: response.txnid,
-        amount: response.amount,
-        status: response.status,
-        hash: response.hash
-      };
-
-      const record = await paymentService.verifyPayment(verification);
-      setPaymentRecord(record);
-      setCurrentState('success');
-      setShowPaymentLink(false);
-      
-      toast.success('Payment completed successfully!');
+      // The backend handles the primary verification via webhook.
+      // This is for giving the user immediate feedback.
+      toast.success('Payment processing initiated successfully!');
+      // We will rely on the backend redirect to show the final success/failure page.
+      // For a smoother UX, you could poll your backend for the payment status here.
+      const record = await paymentService.getPaymentRecord(response.txnid);
+       if (record) {
+           setPaymentRecord(record);
+           setCurrentState('success');
+       }
     } catch (err) {
-      console.error('Payment verification error:', err);
-      setError('Payment verification failed');
+      console.error('Error after payment success callback:', err);
+      setError('Could not confirm payment status.');
       setCurrentState('failure');
-      toast.error('Payment verification failed');
+      toast.error('Could not confirm payment status.');
     }
   };
+
 
   const handlePaymentFailure = (error: any) => {
     console.error('Payment failed:', error);
@@ -185,7 +185,6 @@ function App() {
   };
 
   const handleNewPayment = () => {
-    // Clear all payment data and reset to form
     paymentService.clearPaymentData();
     setPaymentData(null);
     setPaymentRecord(null);
@@ -194,12 +193,15 @@ function App() {
     setShowConfirmation(false);
     setShowPaymentLink(false);
     setCurrentState('form');
+    // Clear URL params
+    window.history.pushState({}, document.title, "/");
     toast.success('Ready for new payment');
   };
 
   const handleRetryPayment = () => {
     setError('');
     setCurrentState('form');
+    window.history.pushState({}, document.title, "/");
   };
 
   const handleBackToForm = () => {
@@ -211,29 +213,13 @@ function App() {
 
   const handleClosePaymentLink = () => {
     setShowPaymentLink(false);
-    // Simulate successful payment for demo purposes
-    setTimeout(() => {
-      const mockResponse: EasebuzzResponse = {
-        easepayid: `EASEBUZZ_${Date.now()}`,
-        txnid: `TXN_${Date.now()}`,
-        amount: paymentData?.amount.toString() || '0',
-        status: 'success',
-        hash: 'mock_hash',
-        payment_source: 'UPI',
-        PG_TYPE: 'UPI',
-        bank_ref_num: `REF_${Date.now()}`,
-        bankcode: 'UPI',
-        error: '',
-        error_Message: ''
-      };
-      handlePaymentSuccess(mockResponse);
-    }, 2000);
+    // You might want to poll for payment status here
   };
 
   return (
     <div className="min-h-screen bg-primary p-4">
       <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
@@ -247,10 +233,10 @@ function App() {
           },
         }}
       />
-      
+
       <div className="container mx-auto max-w-4xl">
         <AnimatePresence mode="wait">
-          {currentState === 'form' && (
+        {currentState === 'form' && (
             <motion.div
               key="form"
               initial={{ opacity: 0, y: 20 }}
@@ -316,7 +302,6 @@ function App() {
           )}
         </AnimatePresence>
 
-        {/* Confirmation Modal */}
         {showConfirmation && paymentData && (
           <ConfirmationModal
             isOpen={showConfirmation}
@@ -328,7 +313,6 @@ function App() {
           />
         )}
 
-        {/* Payment Link Modal */}
         {showPaymentLink && paymentData && (
           <PaymentLinkModal
             isOpen={showPaymentLink}

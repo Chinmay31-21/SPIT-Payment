@@ -1,25 +1,22 @@
 import { PaymentForm, EasebuzzResponse } from '../types/payment';
 
-// Method 1: Open Easy Collect Payment Link
+// Method 1: Open Easy Collect Payment Link (no changes needed here)
 export const openEasyCollectLink = (paymentLink: string): void => {
-  // Open payment link in new window/tab
   const paymentWindow = window.open(
     paymentLink,
     'easebuzz_payment',
     'width=800,height=600,scrollbars=yes,resizable=yes'
   );
 
-  // Optional: Monitor the payment window
   const checkClosed = setInterval(() => {
     if (paymentWindow?.closed) {
       clearInterval(checkClosed);
-      // Handle window closed - you might want to check payment status
       console.log('Payment window closed');
     }
   }, 1000);
 };
 
-// Method 2: Load Easebuzz SDK for traditional checkout
+// Method 2: Load Easebuzz SDK for traditional checkout (no changes needed here)
 export const loadEasebuzzScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
@@ -30,24 +27,24 @@ export const loadEasebuzzScript = (): Promise<boolean> => {
   });
 };
 
+// **UPDATED FUNCTION**
 export const openEasebuzzCheckout = (
-  orderId: string,
-  amount: number,
+  order: { orderId: string, accessKey: string, amount: number, easebuzzKey: string },
   paymentData: PaymentForm,
-  accessKey: string,
   onSuccess: (response: EasebuzzResponse) => void,
   onFailure: (error: any) => void
 ): void => {
+
   const options = {
-    access_key: accessKey, // Access key
-    txnid: orderId, // Transaction ID
-    amount: amount.toString(), // Amount
+    access_key: order.accessKey, // Use the accessKey (hash) from YOUR backend
+    txnid: order.orderId,      // Use the orderId (txnid) from YOUR backend
+    amount: order.amount.toString(),
     firstname: paymentData.fullName.split(' ')[0],
     email: paymentData.email,
     phone: paymentData.phone,
     productinfo: `Fee for ${paymentData.courseName}`,
-    surl: `${window.location.origin}/payment/success`, // Success URL
-    furl: `${window.location.origin}/payment/failure`, // Failure URL
+    surl: `${window.location.origin}/payment/success`,
+    furl: `${window.location.origin}/payment/failure`,
     udf1: paymentData.courseName,
     udf2: paymentData.collegeName,
     udf3: '',
@@ -68,11 +65,13 @@ export const openEasebuzzCheckout = (
   };
 
   const easebuzzCheckout = new window.EasebuzzCheckout(
-    'EASEBUZZ_TEST_KEY', // Your merchant key
-    'test' // Environment: 'test' or 'prod'
+    order.easebuzzKey, // Your merchant key from the backend
+    'test' // Or 'prod' based on your environment
   );
 
   easebuzzCheckout.initiatePayment(options, (response: EasebuzzResponse) => {
+    // This callback is now less critical as backend handles verification,
+    // but it's good for updating UI immediately.
     if (response.status === 'success') {
       onSuccess(response);
     } else {
